@@ -1,0 +1,70 @@
+#!/bin/bash
+#本脚本编写完成后，放置在/etc/init.d/目录下，就可以被linux系统自动识别到该脚本
+#如果本脚本名为/etc/init.d/websocket,则service websocket start就可以启动该服务
+ 
+wsMainFile=./system/websocket_main.php
+subMainFile=./system/subscribe_main.php
+matchMainFile=./system/match_main.php
+
+stop(){
+    # 杀掉websocket, 订阅发布，匹配进程
+    ps -ef | grep $wsMainFile | grep -v grep | awk '{print $2}' | xargs kill -9
+    ps -ef | grep $subMainFile | grep -v grep | awk '{print $2}' | xargs kill -9
+    ps -ef | grep $matchMainFile | grep -v grep | awk '{print $2}' | xargs kill -9
+}
+
+start(){
+    # 先判断是否存在对应进程，若存在，先提示
+    countWs=$(ps -ef | grep $wsMainFile | grep -v grep | wc -l)
+    if [ "$countWs" -gt 0 ]; then
+        echo "websocket服务器进程已经启动，请先关闭进程！"
+    else
+	nohup php $wsMainFile >/dev/null 2>&1 &
+    fi
+
+    # 先判断是否存在对应进程，若存在，先提示
+    countSub=$(ps -ef | grep $subMainFile | grep -v grep | wc -l)
+    if [ "$countSub" -gt 0 ]; then
+        echo "消息订阅服务器进程已经启动，请先关闭进程！"
+    else
+        nohup php $subMainFile >/dev/null 2>&1 &
+    fi
+    
+    # 先判断是否存在对应进程，若存在，先提示
+    countMatch=$(ps -ef | grep $matchMainFile | grep -v grep | wc -l)
+    if [ "$countMatch" -gt 0 ]; then
+        echo "匹配服务器进程已经启动，请先关闭进程！"
+    else
+        nohup php $matchMainFile >/dev/null 2>&1 &
+    fi
+
+}
+
+restart(){
+    # 重启websocket服务器进程
+    ps -ef | grep $wsMainFile | grep -v grep | awk '{print $2}' | xargs kill -9
+    nohup php $wsMainFile >/dev/null 2>&1 &
+
+    ps -ef | grep $subMainFile | grep -v grep | awk '{print $2}' | xargs kill -9
+    nohup php $subMainFile >/dev/null 2>&1 &
+
+    ps -ef | grep $matchMainFile | grep -v grep | awk '{print $2}' | xargs kill -9
+    nohup php $matchMainFile >/dev/null 2>&1 &
+}
+
+ 
+case $1 in
+    start)
+	start;;
+    stop)
+	stop;;
+    restart)
+        restart;;
+    *)
+        echo "请输入如下命令："
+	echo "./websocket start    #启动服务器"
+        echo "./websocket stop     #停止服务器"
+        echo "./websocket restart  #重启服务器"
+
+esac
+

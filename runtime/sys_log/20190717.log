@@ -1,0 +1,8 @@
+[17-Jul-2019 12:30:18 Asia/Shanghai] PHP Parse error:  syntax error, unexpected ''sub_send_url'' (T_CONSTANT_ENCAPSED_STRING), expecting ']' in /var/www/wsfindout/config/redis.php on line 19
+[17-Jul-2019 12:30:18 Asia/Shanghai] PHP Parse error:  syntax error, unexpected ''sub_send_url'' (T_CONSTANT_ENCAPSED_STRING), expecting ']' in /var/www/wsfindout/config/redis.php on line 19
+[17-Jul-2019 12:30:18 Asia/Shanghai] PHP Parse error:  syntax error, unexpected ''sub_send_url'' (T_CONSTANT_ENCAPSED_STRING), expecting ']' in /var/www/wsfindout/config/redis.php on line 19
+[17-Jul-2019 12:30:18 Asia/Shanghai] PHP Parse error:  syntax error, unexpected ''sub_send_url'' (T_CONSTANT_ENCAPSED_STRING), expecting ']' in /var/www/wsfindout/config/redis.php on line 19
+[17-Jul-2019 12:33:08 Asia/Shanghai] PHP Notice:  Undefined property: Swoole\WebSocket\Server::$redis in /var/www/wsfindout/service/controllers/UserCtrl.php on line 56
+[17-Jul-2019 12:33:08 Asia/Shanghai] PHP Error:  Call to a member function get() on null in /var/www/wsfindout/service/controllers/UserCtrl.php on line 56
+[17-Jul-2019 12:34:25 Asia/Shanghai] PHP Notice:  Undefined property: Swoole\WebSocket\Server::$redis in /var/www/wsfindout/service/controllers/UserCtrl.php on line 56
+[17-Jul-2019 12:34:25 Asia/Shanghai] PHP Error:  Call to a member function get() on null in /var/www/wsfindout/service/controllers/UserCtrl.php on line 56

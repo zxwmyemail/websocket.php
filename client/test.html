@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>websocket</title>
+    <script src="jquery.min.js"></script>
+    <style type="text/css">
+        #log {
+            height: 500px;
+            padding: 0px 10px; 
+            width: 100%;
+            background: #f2f2f2; 
+            overflow-y: scroll;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            box-sizing:border-box;
+            font-size: 12px;
+        }
+
+        #msg {
+            height:36px; 
+            padding: 0 10px; 
+            width:100%; 
+            box-sizing:border-box;
+        }
+
+        .servMsg, .myMsg {
+            margin: 8px 0;
+        }
+        
+        .myMsg {
+            color:red;
+        }
+    </style>
+    <script>
+        var ws = new WebSocket("wss://mog.ellogame.com/socket");
+
+        ws.onopen = function(e){
+            console.log("onopen");
+            console.dir(e);
+        };
+        ws.onmessage = function(e){
+            console.log("onmessage");
+            console.dir(e);
+            $('#log').append('<div class="servMsg">【server】 '+e.data+'<div>');
+            $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
+        };
+        var timer = window.setInterval(function(){
+            var heartbeat = {
+                route : "systemCtrl@heartbeat"
+            };
+            ws.send(JSON.stringify(heartbeat));
+        }, 120000);
+        ws.onclose = function(e){
+            window.clearInterval(timer);
+            console.log("onclose");
+            console.dir(e);
+        };
+        ws.onerror = function(e){
+            console.log("onerror");
+            console.dir(e);
+        };
+        $(function(){
+            $('#msgform').submit(function(){
+                ws.send($('#msg').val());
+                $('#log').append('<div class="myMsg">【my】 '+$('#msg').val()+'<div>');
+                $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
+                $('#msg').val('');
+                return false;
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id="log"></div>
+    <div>
+        <form id="msgform">
+            <input type="text" id="msg" placeholder="请输入要发送的消息（按回车键发送）" />
+        </form>
+    </div>
+</body>
+</html>
