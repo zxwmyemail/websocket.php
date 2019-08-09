@@ -15,13 +15,14 @@ class RoomCtrl extends BaseObject{
      * {
             "route": "roomCtrl@create", 
             "request": {
-                "openid":  "1"
+                "openid":  "1",
+                "stageId": 1
             }
         }
      */
     public function create() {
         $request = $this->request;
-        if (!isset($request['openid'])) return;
+        if (!isset($request['openid']) || !isset($request['stageId'])) return;
 
         $systemConf = Config::get('config');
         $roomPrefix = $systemConf['fight_room_prefix'];
@@ -30,14 +31,19 @@ class RoomCtrl extends BaseObject{
         $redis = $this->websocket->redis->get();
 
         // 先把创建者放入到房间
-        $roomPlayers[] = $request['openid'];
+        $roomPlayersInfo = [
+            'stageId' => $request['stageId'],
+            'players' => [$request['openid']];
+        }
 
         // 将房间信息放入redis
         $roomKey = md5($roomPrefix . $request['openid']);
-        $redis->set($roomKey, json_encode($roomPlayers), $expireTime); 
+        $redis->set($roomKey, json_encode($roomPlayersInfo), $expireTime); 
 
         $player = $redis->get($request['openid']); 
-        $room[] = json_decode($player, true);
+        $me = json_decode($player, true);
+        $me['stageId'] = $request['stageId'];
+        $room[] = $me;
        
         $this->websocket->redis->back($redis);
 
@@ -70,11 +76,11 @@ class RoomCtrl extends BaseObject{
 
         // 将房间信息放入redis
         $roomKey = md5($roomPrefix . $request['openid']);
-        $roomPlayers = $redis->get($roomKey); 
-        $roomPlayers = json_decode($roomPlayers, true);
+        $roomPlayersInfo = $redis->get($roomKey); 
+        $roomPlayersInfo = json_decode($roomPlayersInfo, true);
 
         // 房间已经匹配好人数，不能撤销
-        if (count($roomPlayers) >= $playerNum) {
+        if (count($roomPlayersInfo['players']) >= $playerNum) {
             $this->websocket->redis->back($redis);
             return;
         }
@@ -87,7 +93,7 @@ class RoomCtrl extends BaseObject{
             return;
         }
 
-        $playerInfo = $redis->mGet($roomPlayers);
+        $playerInfo = $redis->mGet($roomPlayersInfo['players']);
         foreach ($playerInfo as $info) {
             if ($info) {
                 $info = json_decode($info, true);
@@ -127,10 +133,10 @@ class RoomCtrl extends BaseObject{
         $redis = $this->websocket->redis->get();
 
         $roomKey = md5($roomPrefix . $request['inviter']);
-        $roomPlayers = $redis->get($roomKey); 
+        $roomPlayersInfo = $redis->get($roomKey); 
 
         // 房间不存在
-        if (!$roomPlayers) {
+        if (!$roomPlayersInfo) {
             $this->websocket->redis->back($redis);
             $retMsg = Response::json(Response::ROOM_NOT_EXIST);
             $this->send($this->myFd, $retMsg);
@@ -138,8 +144,8 @@ class RoomCtrl extends BaseObject{
         }
 
         // 房间已满
-        $roomPlayers = json_decode($roomPlayers, true);
-        if (count($roomPlayers) >= $playerNum) {
+        $roomPlayersInfo = json_decode($roomPlayersInfo, true);
+        if (count($roomPlayersInfo['players']) >= $playerNum) {
             $this->websocket->redis->back($redis);
             $retMsg = Response::json(Response::ROOM_NOT_EXIST);
             $this->send($this->myFd, $retMsg);
@@ -147,17 +153,18 @@ class RoomCtrl extends BaseObject{
         }
 
         // 将房间信息放入redis
-        $roomPlayers[] = $request['openid'];
-        $redis->set($roomKey, json_encode($roomPlayers), $expireTime); 
+        $roomPlayersInfo['players'][] = $request['openid'];
+        $redis->set($roomKey, json_encode($roomPlayersInfo), $expireTime); 
 
         $battleInfo = [];
         $channelInfo = [];
-        $playerInfo = $redis->mGet($roomPlayers);
+        $playerInfo = $redis->mGet($roomPlayersInfo['players']);
         foreach ($playerInfo as $info) {
             if ($info) {
                 $info = json_decode($info, true);
                 $info['opponent'] = array_values(array_diff($roomPlayers, [$info['openid']]));
                 $info['isFighting'] = count($roomPlayers) >= $playerNum ? 1 : 0;
+                $info['stageId'] = $roomPlayersInfo['stageId'];
                 $battleInfo[] = $info;
                 $channelInfo[] = [
                     'fd' => $info['fd'],

@@ -252,6 +252,7 @@ class Bootstrap {
         $systemConf = Config::get('config');
         $redisConf  = Config::get('redis', 'master');
         $matchPoolName   = $redisConf['player_match_pool'];
+        $matchPoolNum    = $redisConf['player_match_pool_num'];
         $onlinePlayerNum = $systemConf['online_player_num'];
         $totalTime       = $systemConf['online_count_down'];
         $expireTime      = $systemConf['redis_expire_time'];
@@ -259,43 +260,47 @@ class Bootstrap {
         $baseIns = new BaseRedis($redisConf);
         $redis = $baseIns->getRedis();
         while (true) {
-            $onlineNum = $redis->sCard($matchPoolName);
-            if ($onlineNum < $onlinePlayerNum) {
-                sleep(1);
-                continue;
-            }
-
-            $player = [];
-            for ($i=0; $i < $onlinePlayerNum; $i++) { 
-                $player[] = $redis->sPop($matchPoolName);
-            }
-
-            $battleInfo = [];
-            $playerInfo = $redis->mGet($player);
-            $startTime  = time();
-            foreach ($playerInfo as $info) {
-                if ($info) {
-                    $info = json_decode($info, true);
-                    $info['isFighting'] = 1;
-                    $info['startTime']  = $startTime;
-                    $info['totalTime']  = $totalTime;
-                    $info['opponent']   = array_values(array_diff($player, [$info['openid']]));
-                    $info['foundElem']  = [];
-                    $battleInfo[$info['openid']] = $info;
-                    $redis->setex($info['openid'], $expireTime, json_encode($info));
+            for ($i = 1; $i <= $matchPoolNum; $i++) { 
+                $matchPoolName = $matchPoolName . '_' . $i;
+                $onlineNum = $redis->sCard($matchPoolName);
+                if ($onlineNum < $onlinePlayerNum) {
+                    sleep(1);
+                    continue;
                 }
-            }
 
-            // 向每个玩家所在服务器的订阅频道发送对战消息，以便找到该玩家，并向玩家推送对战消息
-            foreach ($battleInfo as $openid => $info) {
-                $msg = json_encode([
-                    'route' => 'serverCtrl@startBattle',
-                    'request' => [
-                        'fd' => $info['fd'],
-                        'battleInfo' => $battleInfo
-                    ]
-                ]);
-                $redis->publish($info['channel'], $msg);
+                $player = [];
+                for ($i=0; $i < $onlinePlayerNum; $i++) { 
+                    $player[] = $redis->sPop($matchPoolName);
+                }
+
+                $battleInfo = [];
+                $playerInfo = $redis->mGet($player);
+                $startTime  = time();
+                foreach ($playerInfo as $info) {
+                    if ($info) {
+                        $info = json_decode($info, true);
+                        $info['isFighting'] = 1;
+                        $info['stageId']    = $i;
+                        $info['startTime']  = $startTime;
+                        $info['totalTime']  = $totalTime;
+                        $info['opponent']   = array_values(array_diff($player, [$info['openid']]));
+                        $info['foundElem']  = [];
+                        $battleInfo[$info['openid']] = $info;
+                        $redis->setex($info['openid'], $expireTime, json_encode($info));
+                    }
+                }
+
+                // 向每个玩家所在服务器的订阅频道发送对战消息，以便找到该玩家，并向玩家推送对战消息
+                foreach ($battleInfo as $openid => $info) {
+                    $msg = json_encode([
+                        'route' => 'serverCtrl@startBattle',
+                        'request' => [
+                            'fd' => $info['fd'],
+                            'battleInfo' => $battleInfo
+                        ]
+                    ]);
+                    $redis->publish($info['channel'], $msg);
+                }
             }
         }
     }

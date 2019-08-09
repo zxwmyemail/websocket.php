@@ -13,18 +13,18 @@ class MatchCtrl extends BaseObject{
      * 【请求】匹配在线对战玩家
      * 将玩家的openid放入到匹配池中，然后后台匹配进程，进行自动匹配
      * 请求示例：
-     * {"route": "userCtrl@start", "request": {"openid": "1"}}
+     * {"route": "userCtrl@start", "request": {"openid": "1", "stageId": 1}}
      */
     public function start() {
         $request = $this->request;
-        if (!isset($request['openid'])) {
+        if (!isset($request['openid']) || !isset($request['stageId'])) {
             $retMsg = Response::json(Response::ERROR_MATCH_PARAMS);
             $this->send($this->myFd, $retMsg);
             return;
         }
 
         $redisConf = Config::get('redis', 'master');
-        $matchPoolName = $redisConf['player_match_pool'];
+        $matchPoolName = $redisConf['player_match_pool'] . '_' . $request['stageId'];
         $redis = $this->websocket->redis->get();
         $player = $redis->get($request['openid']); 
         if (!$player) {

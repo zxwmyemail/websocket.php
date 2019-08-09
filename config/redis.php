@@ -16,6 +16,7 @@ return [
         'pool_max_size'     => 500,                               // redis连接池最大实例数
         'pool_wait_time'    => 4,                                 // 从redis连接池取实例等待超时时间
         'player_match_pool' => 'findout_player_match_pool',       // 多人对战玩家匹配池的键名，存储于redis的set集合中
+        'player_match_pool_num' => 8,                             // 因为有8关，所以这里匹配池也有8个
         'sub_channel_name'  => [                                  // 订阅渠道
             'host' => '172.19.95.178:13146',
             'all'  => 'findout_all_channel'

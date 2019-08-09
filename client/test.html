@@ -33,42 +33,44 @@
         }
     </style>
     <script>
-        var ws = new WebSocket("wss://mog.ellogame.com/socket");
-
-        ws.onopen = function(e){
-            console.log("onopen");
-            console.dir(e);
-        };
-        ws.onmessage = function(e){
-            console.log("onmessage");
-            console.dir(e);
-            $('#log').append('<div class="servMsg">【server】 '+e.data+'<div>');
-            $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
-        };
-        var timer = window.setInterval(function(){
-            var heartbeat = {
-                route : "systemCtrl@heartbeat"
+        if (window["WebSocket"]) {
+            var ws = new WebSocket("wss://mog.ellogame.com/socket");
+            var timer = 0;
+            ws.onopen = function(e){
+                console.log("onopen");console.dir(e);
+                timer = window.setInterval(function(){
+                    var heartbeat = {
+                        route : "systemCtrl@heartbeat"
+                    };
+                    ws.send(JSON.stringify(heartbeat));
+                }, 120000);
             };
-            ws.send(JSON.stringify(heartbeat));
-        }, 120000);
-        ws.onclose = function(e){
-            window.clearInterval(timer);
-            console.log("onclose");
-            console.dir(e);
-        };
-        ws.onerror = function(e){
-            console.log("onerror");
-            console.dir(e);
-        };
-        $(function(){
-            $('#msgform').submit(function(){
-                ws.send($('#msg').val());
-                $('#log').append('<div class="myMsg">【my】 '+$('#msg').val()+'<div>');
+            ws.onmessage = function(e){
+                console.log("onmessage");console.dir(e);
+                $('#log').append('<div class="servMsg">【server】 '+e.data+'<div>');
                 $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
-                $('#msg').val('');
-                return false;
+            };
+            ws.onclose = function(e){
+                console.log("onclose");console.dir(e);
+                window.clearInterval(timer);
+            };
+            ws.onerror = function(e){
+                console.log("onerror");console.dir(e);
+            };
+            $(function(){
+                $('#msgform').submit(function(){
+                    ws.send($('#msg').val());
+                    $('#log').append('<div class="myMsg">【my】 '+$('#msg').val()+'<div>');
+                    $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
+                    $('#msg').val('');
+                    return false;
+                });
             });
-        });
+        } else {
+            $('#log').append('<div class="servMsg">Sorry, Your browser does not support WebSockets!<div>');
+            $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
+        }
+        
     </script>
 </head>
 <body>
