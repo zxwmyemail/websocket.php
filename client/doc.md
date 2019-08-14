@@ -127,12 +127,12 @@ b服务器订阅了b通道，所以b服务器收到消息，然后把消息转�
 {"route":"userCtrl@broadcast","request":{"name":"李四","msg":"我在测试广播，你收到了吗？"}}
 {"route":"userCtrl@chat","request":{"from":{"openid":"2","nickname":"张三","avatarUrl":"http://www.baidu.com"},"msg":"helloworld!"}}
 
-{"route": "matchCtrl@start", "request": {"openid": "1"}}
-{"route": "matchCtrl@start", "request": {"openid": "2"}}
+{"route": "matchCtrl@start", "request": {"openid": "1","stageId":1}}
+{"route": "matchCtrl@start", "request": {"openid": "2","stageId":1}}
 
 {"route": "serverCtrl@findElem", "request": {"openid": "2","findElem": [1,2,3], "opponent": ["oxf2323ddfdfdfdfdfd"]}}
 
-{"route": "roomCtrl@create", "request": {"openid": "1"}}
+{"route":"roomCtrl@create","request":{"openid":"1","stageId":1}}
 
 {"route": "roomCtrl@joinByInvite", "request": {"openid": "2", "inviter": "1"}}
 

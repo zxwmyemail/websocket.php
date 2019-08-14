@@ -7,6 +7,7 @@ namespace app\service\controllers;
 use app\service\extend\Response;
 use app\system\core\Config;
 use app\system\core\BaseObject;
+use app\system\library\BaseLog;
 
 class UserCtrl extends BaseObject{
     /**
@@ -21,6 +22,8 @@ class UserCtrl extends BaseObject{
             $this->send($this->myFd, $retMsg);
             return;
         }
+
+        BaseLog::error(json_encode($request));
 
         $systemConf = Config::get('config');
         $redisConf = Config::get('redis', 'master');

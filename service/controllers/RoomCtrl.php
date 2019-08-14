@@ -1,12 +1,13 @@
 <?php
 namespace app\service\controllers;
 /********************************************************************************************
- * 邀请好友模式：控制层类
+ * 快速匹配模式：控制层类
  * @author      iProg
  ********************************************************************************************/
 use app\service\extend\Response;
 use app\system\core\Config;
 use app\system\core\BaseObject;
+use app\system\library\BaseLog;
 
 class RoomCtrl extends BaseObject{
     /**
@@ -24,6 +25,8 @@ class RoomCtrl extends BaseObject{
         $request = $this->request;
         if (!isset($request['openid']) || !isset($request['stageId'])) return;
 
+        BaseLog::error(json_encode($request));
+
         $systemConf = Config::get('config');
         $roomPrefix = $systemConf['fight_room_prefix'];
         $expireTime = $systemConf['redis_expire_time'];
@@ -33,8 +36,8 @@ class RoomCtrl extends BaseObject{
         // 先把创建者放入到房间
         $roomPlayersInfo = [
             'stageId' => $request['stageId'],
-            'players' => [$request['openid']];
-        }
+            'players' => [$request['openid']]
+        ];
 
         // 将房间信息放入redis
         $roomKey = md5($roomPrefix . $request['openid']);
