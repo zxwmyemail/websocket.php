@@ -52,6 +52,7 @@ class RoomCtrl extends BaseObject{
 
         $retMsg = Response::json(Response::ROOM_PLAYERS, [
             'isOK' => 0,
+            'stageId' => (int)$request['stageId'],
             'battleInfo' => $room
         ]);
         $this->send($this->myFd, $retMsg);
@@ -165,8 +166,8 @@ class RoomCtrl extends BaseObject{
         foreach ($playerInfo as $info) {
             if ($info) {
                 $info = json_decode($info, true);
-                $info['opponent'] = array_values(array_diff($roomPlayers, [$info['openid']]));
-                $info['isFighting'] = count($roomPlayers) >= $playerNum ? 1 : 0;
+                $info['opponent'] = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
+                $info['isFighting'] = count($roomPlayersInfo['players']) >= $playerNum ? 1 : 0;
                 $info['stageId'] = $roomPlayersInfo['stageId'];
                 $battleInfo[] = $info;
                 $channelInfo[] = [
@@ -183,7 +184,8 @@ class RoomCtrl extends BaseObject{
                 'request' => [
                     'fd'   => $info['fd'],
                     'data' => [
-                        'isOK' => (count($roomPlayers) >= $playerNum) ? 1 : 0,
+                        'isOK' => (count($$roomPlayersInfo['players']) >= $playerNum) ? 1 : 0,
+                        'stageId' => (int)$roomPlayersInfo['stageId'],
                         'battleInfo' => $battleInfo
                     ]
                 ]

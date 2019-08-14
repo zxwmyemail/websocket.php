@@ -85,7 +85,7 @@ class UserCtrl extends BaseObject{
     /**
      * 【请求】找到元素后，发送元素，同步到其他玩家
      * 请求示例：
-     * {"route": "userCtrl@findElem", "request": {"openid": "2","findElem": [1,2,3], "opponent": ["oxf2323ddfdfdfdfdfd"]}}
+     * {"route": "userCtrl@findElem", "request": {"openid": "2","findElem": [1,2,3], "opponent": ["1"]}}
      */
     public function findElem() {
         $request = $this->request;
@@ -95,23 +95,27 @@ class UserCtrl extends BaseObject{
         $player = $redis->get($request['openid']);
         if ($player) {
             $player = json_decode($player, true);
-            $player['findElem'] = array_merge($player['findElem'], $request['findElem']);
+            $findElem = empty($player['findElem']) ? [] : $player['findElem'];
+            $player['findElem'] = array_merge($findElem, $request['findElem']);
             $redis->set($request['openid'], json_encode($player)); 
         }
         $opponents = $redis->mGet($request['opponent']);
         // 向每个玩家所在服务器的订阅频道发送对战消息，以便找到该玩家，并向玩家推送对战消息
         foreach ($opponents as $playerInfo) {
-            $msg = json_encode([
-                'route' => 'serverCtrl@findElem',
-                'request' => [
-                    'fd' => $playerInfo['fd'],
-                    'data' => [
-                        'openid'   => $request['openid'],
-                        'findElem' => $request['findElem']
+            if ($playerInfo) {
+                $playerInfo = json_decode($playerInfo, true);
+                $msg = json_encode([
+                    'route' => 'serverCtrl@findElem',
+                    'request' => [
+                        'fd' => $playerInfo['fd'],
+                        'data' => [
+                            'openid'   => $request['openid'],
+                            'findElem' => $request['findElem']
+                        ]
                     ]
-                ]
-            ]);
-            $redis->publish($playerInfo['channel'], $msg);
+                ]);
+                $redis->publish($playerInfo['channel'], $msg);
+            }
         }
         $this->websocket->redis->back($redis);
     }

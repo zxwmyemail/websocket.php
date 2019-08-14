@@ -17,7 +17,7 @@ class BaseLog {
     const CRITICAL = 'CRITICAL';    //严重级别
     
     private function __construct() {
-        $logDir = LOG_PATH.'/app_log/' . date('Y') . '/';
+        $logDir = RUNTIME_PATH.'/app_log/' . date('Y') . '/';
         if (!is_dir($logDir)) 
             mkdir($logDir, 0777, true); 
 
