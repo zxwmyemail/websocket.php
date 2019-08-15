@@ -8,6 +8,7 @@ use app\service\extend\Response;
 use app\system\core\Config;
 use app\system\core\BaseObject;
 use app\system\library\BaseLog;
+use app\system\library\HttpCurl;
 
 class RoomCtrl extends BaseObject{
     /**
@@ -53,6 +54,7 @@ class RoomCtrl extends BaseObject{
         $retMsg = Response::json(Response::ROOM_PLAYERS, [
             'isOK' => 0,
             'stageId' => (int)$request['stageId'],
+            'stageMessage' => [],
             'battleInfo' => $room
         ]);
         $this->send($this->myFd, $retMsg);
@@ -177,6 +179,18 @@ class RoomCtrl extends BaseObject{
             }
         }
 
+        $stageMessage = [];
+        $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
+        if ($isOK) {
+            $url = 'https://game.elloworld.cn/findout/web/index.php/home/getRandStageElem';
+            $result = HttpCurl::post($url, ['stage_id' => $roomPlayersInfo['stageId']]);
+            $result = json_decode($result, true);
+            if ($result && isset($result['success']) && $result['success'] == 1) {
+                $stageMessage = $result['data']['stage_message'];
+            }
+            unset($result);
+        }
+
         // 向房间所有玩家推送房间信息
         foreach ($channelInfo as $info) {
             $msg = json_encode([
@@ -184,9 +198,10 @@ class RoomCtrl extends BaseObject{
                 'request' => [
                     'fd'   => $info['fd'],
                     'data' => [
-                        'isOK' => (count($$roomPlayersInfo['players']) >= $playerNum) ? 1 : 0,
-                        'stageId' => (int)$roomPlayersInfo['stageId'],
-                        'battleInfo' => $battleInfo
+                        'isOK'         => $isOK,
+                        'stageId'      => (int)$roomPlayersInfo['stageId'],
+                        'stageMessage' => $stageMessage,
+                        'battleInfo'   => $battleInfo
                     ]
                 ]
             ]);
