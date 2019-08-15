@@ -182,8 +182,9 @@ class RoomCtrl extends BaseObject{
         $stageMessage = [];
         $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
         if ($isOK) {
-            $url = 'https://game.elloworld.cn/findout/web/index.php/home/getRandStageElem';
-            $result = HttpCurl::post($url, ['stage_id' => $roomPlayersInfo['stageId']]);
+            $result = HttpCurl::post($systemConf['stage_elem_url'], [
+                'stage_id' => $roomPlayersInfo['stageId']
+            ]);
             $result = json_decode($result, true);
             if ($result && isset($result['success']) && $result['success'] == 1) {
                 $stageMessage = $result['data']['stage_message'];

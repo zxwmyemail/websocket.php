@@ -121,7 +121,11 @@ class ServerCtrl extends BaseObject{
         $request = $this->request;
         if (!isset($request['battleInfo']) || !isset($request['fd'])) return;
 
-        $retMsg = Response::json(Response::BATTLE_PACKET, $request['battleInfo']);
+        $retMsg = Response::json(Response::BATTLE_PACKET, [
+            'stageId'      => $request['stageId'],
+            'stageMessage' => $request['stageMessage'],
+            'battleInfo'   => $request['battleInfo']
+        ]);
         $this->send($request['fd'], $retMsg);
     }
 

@@ -269,7 +269,7 @@ class Bootstrap {
                 }
 
                 $player = [];
-                for ($i=0; $i < $onlinePlayerNum; $i++) { 
+                for ($j=0; $j < $onlinePlayerNum; $j++) { 
                     $player[] = $redis->sPop($matchPoolName);
                 }
 
@@ -290,12 +290,24 @@ class Bootstrap {
                     }
                 }
 
+                $result = HttpCurl::post($systemConf['stage_elem_url'], [
+                    'stage_id' => $roomPlayersInfo['stageId']
+                ]);
+                $result = json_decode($result, true);
+                $stageMessage = [];
+                if ($result && isset($result['success']) && $result['success'] == 1) {
+                    $stageMessage = $result['data']['stage_message'];
+                }
+                unset($result);
+
                 // 向每个玩家所在服务器的订阅频道发送对战消息，以便找到该玩家，并向玩家推送对战消息
                 foreach ($battleInfo as $openid => $info) {
                     $msg = json_encode([
                         'route' => 'serverCtrl@startBattle',
                         'request' => [
                             'fd' => $info['fd'],
+                            'stageId' => $i,
+                            'stageMessage' => $stageMessage,
                             'battleInfo' => $battleInfo
                         ]
                     ]);
