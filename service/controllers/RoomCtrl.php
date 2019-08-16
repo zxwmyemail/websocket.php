@@ -5,6 +5,7 @@ namespace app\service\controllers;
  * @author      iProg
  ********************************************************************************************/
 use app\service\extend\Response;
+use app\service\models\WssUtil;
 use app\system\core\Config;
 use app\system\core\BaseObject;
 use app\system\library\BaseLog;
