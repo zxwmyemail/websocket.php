@@ -148,7 +148,6 @@ class RoomCtrl extends BaseObject{
         $redis->set($roomKey, json_encode($roomPlayersInfo), $expireTime); 
 
         $battleInfo = [];
-        $channelInfo = [];
         $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
         $playerInfo = $redis->mGet($roomPlayersInfo['players']);
         foreach ($playerInfo as $info) {
@@ -158,10 +157,6 @@ class RoomCtrl extends BaseObject{
                 $info['isFighting'] = $isOK;
                 $info['stageId'] = $roomPlayersInfo['stageId'];
                 $battleInfo[] = $info;
-                $channelInfo[] = [
-                    'fd' => $info['fd'],
-                    'channel' => $info['channel']
-                ];
             }
         }
 
@@ -177,24 +172,13 @@ class RoomCtrl extends BaseObject{
             unset($result);
         }
 
-        // 向房间所有玩家推送房间信息
-        foreach ($channelInfo as $info) {
-            $msg = json_encode([
-                'route' => 'serverCtrl@push',
-                'request' => [
-                    'fd'   => $info['fd'],
-                    'type' => 'roomInfo',
-                    'data' => [
-                        'isOK'         => $isOK,
-                        'stageId'      => (int)$roomPlayersInfo['stageId'],
-                        'stageMessage' => $stageMessage,
-                        'battleInfo'   => $battleInfo
-                    ]
-                ]
-            ]);
-            $redis->publish($info['channel'], $msg);
-        }
-       
+        WssUtil::publish($redis, 'roomInfo', $roomPlayersInfo['players'], [
+            'isOK'         => $isOK,
+            'stageId'      => (int)$roomPlayersInfo['stageId'],
+            'stageMessage' => $stageMessage,
+            'battleInfo'   => $battleInfo
+        ]);
+
         $this->websocket->redis->back($redis);
     }
 
