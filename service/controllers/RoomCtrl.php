@@ -149,12 +149,13 @@ class RoomCtrl extends BaseObject{
 
         $battleInfo = [];
         $channelInfo = [];
+        $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
         $playerInfo = $redis->mGet($roomPlayersInfo['players']);
         foreach ($playerInfo as $info) {
             if ($info) {
                 $info = json_decode($info, true);
                 $info['opponent'] = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
-                $info['isFighting'] = count($roomPlayersInfo['players']) >= $playerNum ? 1 : 0;
+                $info['isFighting'] = $isOK;
                 $info['stageId'] = $roomPlayersInfo['stageId'];
                 $battleInfo[] = $info;
                 $channelInfo[] = [
@@ -165,7 +166,6 @@ class RoomCtrl extends BaseObject{
         }
 
         $stageMessage = [];
-        $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
         if ($isOK) {
             $result = HttpCurl::post($systemConf['stage_elem_url'], [
                 'stage_id' => $roomPlayersInfo['stageId']
