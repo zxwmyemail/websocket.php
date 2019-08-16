@@ -27,8 +27,6 @@ class RoomCtrl extends BaseObject{
         $request = $this->request;
         if (!isset($request['openid']) || !isset($request['stageId'])) return;
 
-        BaseLog::error(json_encode($request));
-
         $systemConf = Config::get('config');
         $roomPrefix = $systemConf['fight_room_prefix'];
         $expireTime = $systemConf['redis_expire_time'];

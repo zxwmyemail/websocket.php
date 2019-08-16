@@ -24,8 +24,6 @@ class UserCtrl extends BaseObject{
             return;
         }
 
-        BaseLog::error(json_encode($request));
-
         $systemConf = Config::get('config');
         $redisConf = Config::get('redis', 'master');
         $playerData = [
