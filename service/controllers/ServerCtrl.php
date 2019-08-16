@@ -113,8 +113,7 @@ class ServerCtrl extends BaseObject{
         }
 
         $data = isset($request['data']) ? $request['data'] : [];
-        $retMsg = Response::json($msgType, $data);
-        $this->send($request['fd'], $retMsg);
+        $this->send($request['fd'], Response::json($msgType, $data));
     }
 
 }
