@@ -98,21 +98,7 @@ class RoomCtrl extends BaseObject{
             $this->send($this->myFd, $retMsg);
             return;
         }
-
-        $playerInfo = $redis->mGet($roomPlayersInfo['players']);
-        foreach ($playerInfo as $info) {
-            if ($info) {
-                $info = json_decode($info, true);
-                $msg = json_encode([
-                    'route' => 'serverCtrl@cancelRoom',
-                    'request' => [
-                        'fd'   => $info['fd']
-                    ]
-                ]);
-                $redis->publish($info['channel'], $msg);
-            }
-        }
-
+        WssUtil::publish($redis, 'cancelRoom', $roomPlayersInfo['players']);
         $this->websocket->redis->back($redis);
     }
 
@@ -195,9 +181,10 @@ class RoomCtrl extends BaseObject{
         // 向房间所有玩家推送房间信息
         foreach ($channelInfo as $info) {
             $msg = json_encode([
-                'route' => 'serverCtrl@roomInfo',
+                'route' => 'serverCtrl@push',
                 'request' => [
                     'fd'   => $info['fd'],
+                    'type' => 'roomInfo',
                     'data' => [
                         'isOK'         => $isOK,
                         'stageId'      => (int)$roomPlayersInfo['stageId'],

@@ -8,6 +8,7 @@ use app\service\extend\Response;
 use app\system\core\Config;
 use app\system\core\BaseObject;
 use app\system\library\BaseLog;
+use app\service\models\WssUtil;
 
 class UserCtrl extends BaseObject{
     /**
@@ -55,24 +56,8 @@ class UserCtrl extends BaseObject{
         // 判断如果用户是断线重连，则向该玩家同步所有其它玩家数据
         $diff = time() - $playerData['startTime'];
         if ($playerData['isFighting'] == 1 && $diff < $playerData['totalTime']) {
-            $battleInfo = [];
-            $playerInfo = $redis->mGet($playerData['opponent']);
-            foreach ($playerInfo as $info) {
-                if ($info) {
-                    $info = json_decode($info, true);
-                    $battleInfo[$info['openid']] = $info;
-
-                    // 向其他玩家推送该玩家的数据
-                    $msg = json_encode([
-                        'route' => 'serverCtrl@reconnect',
-                        'request' => [
-                            'fd'   => $info['fd'],
-                            'data' => $playerData
-                        ]
-                    ]);
-                    $redis->publish($info['channel'], $msg);
-                }
-            }
+            $result = WssUtil::publish($redis, 'reconnect', $playerData['opponent'], $playerData);
+            $battleInfo = $result['battleInfo'];
             $battleInfo[$playerData['openid']] = $playerData;
 
             // 向该玩家推送其它玩家的数据
@@ -99,31 +84,19 @@ class UserCtrl extends BaseObject{
             $player['findElem'] = array_merge($findElem, $request['findElem']);
             $redis->set($request['openid'], json_encode($player)); 
         }
-        $opponents = $redis->mGet($request['opponent']);
-        // 向每个玩家所在服务器的订阅频道发送对战消息，以便找到该玩家，并向玩家推送对战消息
-        foreach ($opponents as $playerInfo) {
-            if ($playerInfo) {
-                $playerInfo = json_decode($playerInfo, true);
-                $msg = json_encode([
-                    'route' => 'serverCtrl@findElem',
-                    'request' => [
-                        'fd' => $playerInfo['fd'],
-                        'data' => [
-                            'openid'   => $request['openid'],
-                            'findElem' => $request['findElem']
-                        ]
-                    ]
-                ]);
-                $redis->publish($playerInfo['channel'], $msg);
-            }
-        }
+
+        // 向每个玩家所在服务器的订阅频道发送对战消息
+        WssUtil::publish($redis, 'findElem', $request['opponent'], [
+            'openid'   => $request['openid'],
+            'findElem' => $request['findElem']
+        ]);
         $this->websocket->redis->back($redis);
     }
 
     /**
      * 【请求】游戏结束
      * 请求示例：
-     * {"route": "userCtrl@gameOver", "request": {"openid": "2", "isEarlyOver": 1}}
+     * {"route": "userCtrl@gameOver", "request": {"openid": "2"}}
      */
     public function gameOver() {
         $request = $this->request;
@@ -141,26 +114,6 @@ class UserCtrl extends BaseObject{
         $player['isFighting'] = 2;
         $player['endTime'] = $endTime;
         $redis->set($request['openid'], json_encode($player));
-
-        if (!$request['isEarlyOver']) {
-            $this->websocket->redis->back($redis);
-            return;
-        }
-
-        // 如果游戏是提前结束，则通知对战玩家，游戏结束
-        foreach ($player['opponent'] as $openid) {
-            $opponent = $redis->get($openid); 
-            $opponent = json_decode($opponent, true);
-            $opponent['isFighting'] = 2;
-            $opponent['endTime'] = $endTime;
-            $redis->set($openid, json_encode($opponent));
-
-            $msg = json_encode([
-                'route' => 'serverCtrl@gameOver',
-                'request' => ['fd' => $opponent['fd']]
-            ]);
-            $redis->publish($opponent['channel'], $msg);
-        }
         $this->websocket->redis->back($redis);
     }
 
@@ -178,32 +131,17 @@ class UserCtrl extends BaseObject{
      */
     public function chat() {
         $request = $this->request;
-        if (!isset($request['from']) || !isset($request['msg']) || empty($request['msg'])) {
+        if (!isset($request['from']) || empty($request['msg'])) {
             return;
         }
 
         $redis = $this->websocket->redis->get();
         $player = $redis->get($request['from']['openid']); 
         $player = json_decode($player, true);
-        $playerInfo = $redis->mGet($player['opponent']);
-        foreach ($playerInfo as $info) {
-            if ($info) {
-                $info = json_decode($info, true);
-
-                // 向其他玩家推送该玩家的数据
-                $msg = json_encode([
-                    'route' => 'serverCtrl@chat',
-                    'request' => [
-                        'fd'   => $info['fd'],
-                        'data' => [
-                            'from' => $request['from'],
-                            'msg'  => $request['msg']
-                        ]
-                    ]
-                ]);
-                $redis->publish($info['channel'], $msg);
-            }
-        }
+        WssUtil::publish($redis, 'chat', $player['opponent'], [
+            'from' => $request['from'],
+            'msg'  => $request['msg']
+        ]);
         $this->websocket->redis->back($redis);
     }
 

@@ -7,6 +7,7 @@ namespace app\system;
  * @version     1.0
  ********************************************************************************************/
 use app\service\extend\Response;
+use app\service\models\WssUtil;
 use app\system\core\Config;
 use app\system\library\Log;
 use app\system\library\HttpCurl;
@@ -190,24 +191,15 @@ class Bootstrap {
             self::$_wsIns->redis->back($redis);
             return;
         }
-        
-        $playerInfo = $redis->mGet($player['opponent']);
-        foreach ($playerInfo as $info) {
-            if (!$info) continue;
-            $info = json_decode($info, true);
-            $redis->publish($info['channel'], json_encode([
-                'route' => 'serverCtrl@close',
-                'request' => [
-                    'fd' => $info['fd'],
-                    'offData' => [
-                        'openid' => $player['openid'],
-                        'nickname' => $player['nickname'],
-                        'avatarUrl' => $player['avatarUrl'],
-                        'msg' => '你的对手【' . $player['nickname'] . '】离开了游戏' 
-                    ]
-                ]
-            ]));
-        }
+
+        // 推送离线消息给对战所有方
+        WssUtil::publish($redis, 'offline', $player['opponent'], [
+            'openid'    => $player['openid'],
+            'nickname'  => $player['nickname'],
+            'avatarUrl' => $player['avatarUrl'],
+            'msg'       => '你的对手【' . $player['nickname'] . '】离开了游戏' 
+        ]);
+
         self::$_wsIns->redis->back($redis);
     }
 
@@ -302,16 +294,18 @@ class Bootstrap {
 
                 // 向每个玩家所在服务器的订阅频道发送对战消息，以便找到该玩家，并向玩家推送对战消息
                 foreach ($battleInfo as $openid => $info) {
-                    $msg = json_encode([
-                        'route' => 'serverCtrl@startBattle',
+                    $redis->publish($info['channel'], json_encode([
+                        'route' => 'serverCtrl@push',
                         'request' => [
-                            'fd' => $info['fd'],
-                            'stageId' => $i,
-                            'stageMessage' => $stageMessage,
-                            'battleInfo' => $battleInfo
+                            'fd'   => $info['fd'],
+                            'type' => 'startBattle',
+                            'data' => [
+                                'stageId' => $i,
+                                'stageMessage' => $stageMessage,
+                                'battleInfo' => $battleInfo
+                            ]
                         ]
-                    ]);
-                    $redis->publish($info['channel'], $msg);
+                    ]));
                 }
             }
         }
