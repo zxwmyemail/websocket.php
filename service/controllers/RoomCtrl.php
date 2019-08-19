@@ -155,6 +155,7 @@ class RoomCtrl extends BaseObject{
                 $info = json_decode($info, true);
                 $info['opponent'] = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
                 $info['isFighting'] = $isOK;
+                $info['startTime'] = time();
                 $info['stageId'] = $roomPlayersInfo['stageId'];
                 $battleInfo[] = $info;
             }
