@@ -84,7 +84,7 @@ class ServerCtrl extends BaseObject{
         $request = $this->request;
         if (!isset($request['fd']) || !isset($request['type'])) return;
 
-        $msgType = [];
+        $msgType = Response::ERROR_TYPE_UNKNOWN;
         switch ($request['type']) {
             case 'chat':
                 $msgType = Response::PLAYER_CHAT;
