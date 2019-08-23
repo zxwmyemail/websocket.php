@@ -267,6 +267,16 @@ class Bootstrap {
                     $player[] = $redis->sPop($matchPoolName);
                 }
 
+                $result = HttpCurl::post($systemConf['stage_elem_url'], [
+                    'stage_id' => $i
+                ]);
+                $result = json_decode($result, true);
+                $stageInfo = [];
+                if ($result && isset($result['success']) && $result['success'] == 1) {
+                    $stageInfo = $result['data'];
+                }
+                unset($result);
+
                 $battleInfo = [];
                 $playerInfo = $redis->mGet($player);
                 $startTime  = time();
@@ -276,23 +286,13 @@ class Bootstrap {
                         $info['isFighting'] = 1;
                         $info['stageId']    = $i;
                         $info['startTime']  = $startTime;
-                        $info['totalTime']  = $totalTime;
+                        $info['totalTime']  = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
                         $info['opponent']   = array_values(array_diff($player, [$info['openid']]));
                         $info['foundElem']  = [];
                         $battleInfo[$info['openid']] = $info;
                         $redis->setex($info['openid'], $expireTime, json_encode($info));
                     }
                 }
-
-                $result = HttpCurl::post($systemConf['stage_elem_url'], [
-                    'stage_id' => $roomPlayersInfo['stageId']
-                ]);
-                $result = json_decode($result, true);
-                $stageMessage = [];
-                if ($result && isset($result['success']) && $result['success'] == 1) {
-                    $stageMessage = $result['data']['stage_message'];
-                }
-                unset($result);
 
                 // 向每个玩家所在服务器的订阅频道发送对战消息，以便找到该玩家，并向玩家推送对战消息
                 foreach ($battleInfo as $openid => $info) {
@@ -302,9 +302,10 @@ class Bootstrap {
                             'fd'   => $info['fd'],
                             'type' => 'startBattle',
                             'data' => [
-                                'stageId' => $i,
-                                'stageMessage' => $stageMessage,
-                                'battleInfo' => $battleInfo
+                                'stageId'      => $i,
+                                'stageMessage' => isset($stageInfo['stage_message']) ? $stageInfo['stage_message'] : [],
+                                'counting'     => isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600,
+                                'battleInfo'   => $battleInfo,
                             ]
                         ]
                     ]));
