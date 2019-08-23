@@ -285,7 +285,7 @@ class Bootstrap {
                         $info = json_decode($info, true);
                         $info['isFighting'] = 1;
                         $info['stageId']    = $i;
-                        $info['startTime']  = $startTime;
+                        $info['startTime']  = 0;
                         $info['totalTime']  = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
                         $info['opponent']   = array_values(array_diff($player, [$info['openid']]));
                         $info['foundElem']  = [];
