@@ -180,6 +180,7 @@ class Bootstrap {
         $redis = self::$_wsIns->redis->get();
         $openid = $redis->get(md5($fd)); 
         $player = $redis->get($openid); 
+
         if (!$player) {
             self::$_wsIns->redis->back($redis);
             return;
@@ -187,6 +188,7 @@ class Bootstrap {
 
         $player = json_decode($player, true);
         $diff = time() - $player['startTime'];
+
         if (empty($player['opponent']) || $player['isFighting'] != 1 || $diff >= $player['totalTime']) {
             self::$_wsIns->redis->back($redis);
             return;

@@ -149,6 +149,18 @@ class RoomCtrl extends BaseObject{
 
         $battleInfo = [];
         $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
+        $stageInfo = [];
+        if ($isOK) {
+            $result = HttpCurl::post($systemConf['stage_elem_url'], [
+                'stage_id' => $roomPlayersInfo['stageId']
+            ]);
+            $result = json_decode($result, true);
+            if ($result && isset($result['success']) && $result['success'] == 1) {
+                $stageInfo = $result['data'];
+            }
+            unset($result);
+        }
+
         $playerInfo = $redis->mGet($roomPlayersInfo['players']);
         foreach ($playerInfo as $info) {
             if ($info) {
@@ -156,27 +168,18 @@ class RoomCtrl extends BaseObject{
                 $info['opponent'] = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
                 $info['isFighting'] = $isOK;
                 $info['startTime'] = time();
+                $info['totalTime'] = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
                 $info['stageId'] = $roomPlayersInfo['stageId'];
+                // 设置玩家信息
+                $redis->set($info['openid'], json_encode($info), $expireTime);
                 $battleInfo[] = $info;
             }
-        }
-
-        $stageMessage = [];
-        if ($isOK) {
-            $result = HttpCurl::post($systemConf['stage_elem_url'], [
-                'stage_id' => $roomPlayersInfo['stageId']
-            ]);
-            $result = json_decode($result, true);
-            if ($result && isset($result['success']) && $result['success'] == 1) {
-                $stageMessage = $result['data']['stage_message'];
-            }
-            unset($result);
         }
 
         WssUtil::publish($redis, 'roomInfo', $roomPlayersInfo['players'], [
             'isOK'         => $isOK,
             'stageId'      => (int)$roomPlayersInfo['stageId'],
-            'stageMessage' => $stageMessage,
+            'stageMessage' => isset($stageInfo['stage_message']) ? $stageInfo['stage_message'] : [],
             'battleInfo'   => $battleInfo
         ]);
 
