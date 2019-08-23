@@ -138,3 +138,5 @@ b服务器订阅了b通道，所以b服务器收到消息，然后把消息转�
 
 {"route": "roomCtrl@cancel", "request": {"openid": "1"}}
 
+{"route": "http@getBattleStatus", "request": {"openid": "2"}}
+

@@ -165,11 +165,29 @@ class Bootstrap {
             $retMsg = Response::json(Response::ERROR_ROUTE_PARAMS);
             $response->end($retMsg);
         } else {
-            go(function(){
-                self::routeToCtrl();
-            });
-            $retMsg = Response::json(Response::SUCCESS);
-            $response->end($retMsg);
+            $request = self::$_reqParams;
+            error_log('request route: ' . json_encode($request));
+            if (self::$_routeParams == 'http@getBattleStatus' && isset($request['openid'])) {
+                $isBattle = 0;
+                $redis = $wsIns->redis->get();
+                $player = $redis->get($request['openid']); 
+                if ($player) {
+                    $player = json_decode($player, true);
+                    $diff = time() - $player['startTime'];
+                    if ($player['isFighting'] == 1 && $diff < $player['totalTime']) {
+                        $isBattle = 1;
+                    }
+                }
+                $wsIns->redis->back($redis);
+                $retMsg = Response::json(Response::SUCCESS, ['isBattle' => $isBattle]);
+                $response->end($retMsg);
+            } else {
+                go(function(){
+                    self::routeToCtrl();
+                });
+                $retMsg = Response::json(Response::SUCCESS);
+                $response->end($retMsg);
+            } 
         }
     }
 

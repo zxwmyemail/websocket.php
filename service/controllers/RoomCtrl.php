@@ -244,13 +244,14 @@ class RoomCtrl extends BaseObject{
 
         $redis = $this->websocket->redis->get();
 
-        $totalTime = $startTime = 0;
+        $totalTime = $startTime = $isFighting = 0;
         
         $player = $redis->get($request['openid']); 
         if ($player) {
             $playerData = json_decode($player, true);
             $totalTime = $playerData['totalTime'];
             $startTime = $playerData['startTime'];
+            $isFighting = $playerData['isFighting'];
         }
 
         // 向该玩家推送其它玩家的数据
@@ -258,6 +259,7 @@ class RoomCtrl extends BaseObject{
             'curTimestamp' => time(),
             'startTime'    => $startTime,
             'totalTime'    => $totalTime,
+            'isFighting'   => $isFighting,
         ]);
 
         $this->send($this->myFd, $retMsg);
