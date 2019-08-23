@@ -166,16 +166,17 @@ class Bootstrap {
             $response->end($retMsg);
         } else {
             $request = self::$_reqParams;
-            error_log('request route: ' . json_encode($request));
-            if (self::$_routeParams == 'http@getBattleStatus' && isset($request['openid'])) {
+            if (self::$_routeParams == 'http@getBattleStatus') {
                 $isBattle = 0;
                 $redis = $wsIns->redis->get();
-                $player = $redis->get($request['openid']); 
-                if ($player) {
-                    $player = json_decode($player, true);
-                    $diff = time() - $player['startTime'];
-                    if ($player['isFighting'] == 1 && $diff < $player['totalTime']) {
-                        $isBattle = 1;
+                if (isset($request['openid'])) {
+                    $player = $redis->get($request['openid']); 
+                    $player = $player ? json_decode($player, true) : [];
+                    if ($player) {
+                        $diff = time() - $player['startTime'];
+                        if ($player['isFighting'] == 1 && $diff < $player['totalTime']) {
+                            $isBattle = 1;
+                        }
                     }
                 }
                 $wsIns->redis->back($redis);
