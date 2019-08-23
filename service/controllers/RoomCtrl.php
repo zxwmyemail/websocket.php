@@ -180,6 +180,7 @@ class RoomCtrl extends BaseObject{
             'isOK'         => $isOK,
             'stageId'      => (int)$roomPlayersInfo['stageId'],
             'stageMessage' => isset($stageInfo['stage_message']) ? $stageInfo['stage_message'] : [],
+            'counting'     => isset($stageInfo['counting']) ? $stageInfo['counting'] : 600,
             'battleInfo'   => $battleInfo
         ]);
 
