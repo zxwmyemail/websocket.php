@@ -92,7 +92,7 @@ class Bootstrap {
             'daemonize'                => 0,
             'heartbeat_idle_time'      => 600,
             'heartbeat_check_interval' => 60,
-            'max_coroutine'            => 3000,
+            'max_coroutine'            => 8000,
             'max_request'              => 10000,
             'http_parse_post'          => false,
             // 'log_file'                 => RUNTIME_PATH . DS . 'sys_log' . DS . 'websocket.log',
