@@ -187,4 +187,43 @@ class RoomCtrl extends BaseObject{
         $this->websocket->redis->back($redis);
     }
 
+
+    /**
+     * 【请求】同步对战开始时间
+     * 请求示例：
+     * {
+            "route": "roomCtrl@syncTime", 
+            "request": {
+                "openid": "1",
+                "opponent": ["oxf2323ddfdfdfdfdfd"],
+            }
+        }
+     */
+    public function syncTime() {
+        $request = $this->request;
+        if (!isset($request['openid']) || !isset($request['opponent'])) return;
+
+        $curTime = time();
+        $systemConf = Config::get('config');
+        $expireTime = $systemConf['redis_expire_time'];
+
+        $redis = $this->websocket->redis->get();
+
+        $players = [$request['openid']];
+        if (is_array($request['opponent'])) {
+            $players = array_merge($players, $request['opponent']);
+        }
+
+        $playerInfo = $redis->mGet($players);
+        foreach ($playerInfo as $info) {
+            if ($info) {
+                $info = json_decode($info, true);
+                $info['startTime'] = $curTime;
+                // 设置玩家信息
+                $redis->set($info['openid'], json_encode($info), $expireTime);
+            }
+        }
+        $this->websocket->redis->back($redis);
+    }
+
 }

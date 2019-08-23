@@ -59,7 +59,10 @@ class UserCtrl extends BaseObject{
             $battleInfo[$playerData['openid']] = $playerData;
 
             // 向该玩家推送其它玩家的数据
-            $retMsg = Response::json(Response::RECONNECTION, ['battleInfo' => $battleInfo]);
+            $retMsg = Response::json(Response::RECONNECTION, [
+                'curTimestamp' => time(),
+                'battleInfo'   => $battleInfo
+            ]);
             $this->send($this->myFd, $retMsg);
         }
         $this->websocket->redis->back($redis);
