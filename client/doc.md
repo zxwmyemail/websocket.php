@@ -41,7 +41,8 @@ upstream websocket {
 }
 
 server段添加：
-location /mog {
+websocket请求：
+location /socket {
     proxy_pass http://websocket;
     proxy_http_version 1.1;
     proxy_connect_timeout 4s;
@@ -51,6 +52,12 @@ location /mog {
     proxy_set_header Connection "Upgrade";
     proxy_set_header X-Real-IP $remote_addr;
 }
+
+http请求：
+location /http {
+    proxy_pass http://websocket;
+}
+
 
 然后客户端使用  wss://域名/mog   即可访问
 
