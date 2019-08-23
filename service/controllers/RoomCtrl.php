@@ -165,11 +165,11 @@ class RoomCtrl extends BaseObject{
         foreach ($playerInfo as $info) {
             if ($info) {
                 $info = json_decode($info, true);
-                $info['opponent'] = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
+                $info['opponent']   = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
                 $info['isFighting'] = $isOK;
-                $info['startTime'] = time();
-                $info['totalTime'] = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
-                $info['stageId'] = $roomPlayersInfo['stageId'];
+                $info['startTime']  = 0;
+                $info['totalTime']  = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
+                $info['stageId']    = $roomPlayersInfo['stageId'];
                 // 设置玩家信息
                 $redis->set($info['openid'], json_encode($info), $expireTime);
                 $battleInfo[] = $info;
@@ -218,11 +218,50 @@ class RoomCtrl extends BaseObject{
         foreach ($playerInfo as $info) {
             if ($info) {
                 $info = json_decode($info, true);
-                $info['startTime'] = $curTime;
-                // 设置玩家信息
-                $redis->set($info['openid'], json_encode($info), $expireTime);
+                if ($info['startTime'] <= 0) {
+                    $info['startTime'] = $curTime;
+                    // 设置玩家信息
+                    $redis->set($info['openid'], json_encode($info), $expireTime);
+                }
             }
         }
+        $this->websocket->redis->back($redis);
+    }
+
+    /**
+     * 【请求】获取对战时间
+     * 请求示例：
+     * {
+            "route": "roomCtrl@getBattleTime", 
+            "request": {
+                "openid": "1"
+            }
+        }
+     */
+    public function getBattleTime() {
+        $request = $this->request;
+        if (!isset($request['openid'])) return;
+
+        $redis = $this->websocket->redis->get();
+
+        $totalTime = $startTime = 0;
+        
+        $player = $redis->get($request['openid']); 
+        if ($player) {
+            $playerData = json_decode($player, true);
+            $totalTime = $playerData['totalTime'];
+            $startTime = $playerData['startTime'];
+        }
+
+        // 向该玩家推送其它玩家的数据
+        $retMsg = Response::json(Response::BATTLE_TIME, [
+            'curTimestamp' => time(),
+            'startTime'    => $startTime,
+            'totalTime'    => $totalTime,
+        ]);
+
+        $this->send($this->myFd, $retMsg);
+
         $this->websocket->redis->back($redis);
     }
 

@@ -16,6 +16,7 @@ class Response {
     const ROOM_PLAYERS          = ['code' => 210, 'msg' => '对战房间玩家信息'];
     const ROOM_NOT_EXIST        = ['code' => 211, 'msg' => '对战房间不存在或已满'];
     const SUCCESS_CANCEL_ROOM   = ['code' => 212, 'msg' => '房间已取消'];
+    const BATTLE_TIME           = ['code' => 213, 'msg' => '获取对战时间'];
 
     const ERROR_ROUTE_PARAMS    = ['code' => 500, 'msg' => '路由参数有误'];
     const ERROR_REGISTER_PARAMS = ['code' => 501, 'msg' => '用户注册参数有误'];

@@ -35,7 +35,7 @@ class UserCtrl extends BaseObject{
             'isFighting' => 0,
             'startTime'  => 0,
             'endTime'    => 0,
-            'totalTime'  => $systemConf['online_count_down'],
+            'totalTime'  => 0,
             'opponent'   => [],
             'foundElem'  => [],
         ];
