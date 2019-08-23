@@ -147,7 +147,6 @@ class RoomCtrl extends BaseObject{
         $roomPlayersInfo['players'][] = $request['openid'];
         $redis->set($roomKey, json_encode($roomPlayersInfo), $expireTime); 
 
-        $battleInfo = [];
         $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
         $stageInfo = [];
         if ($isOK) {
@@ -161,6 +160,7 @@ class RoomCtrl extends BaseObject{
             unset($result);
         }
 
+        $battleInfo = [];
         $playerInfo = $redis->mGet($roomPlayersInfo['players']);
         foreach ($playerInfo as $info) {
             if ($info) {
