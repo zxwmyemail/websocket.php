@@ -107,6 +107,9 @@ class ServerCtrl extends BaseObject{
             case 'offline':
                 $msgType = Response::OFF_LINE;
                 break;
+            case 'quitBattle':
+                $msgType = Response::PLAYER_QUIT_BATTLE;
+                break;
             default:
                 return false;
                 break;

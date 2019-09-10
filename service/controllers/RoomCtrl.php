@@ -97,7 +97,7 @@ class RoomCtrl extends BaseObject{
             $this->send($this->myFd, $retMsg);
             return;
         }
-        WssUtil::publish($redis, 'cancelRoom', $roomPlayersInfo['players']);
+        WssUtil::publishBattleInfo($redis, 'cancelRoom', $roomPlayersInfo['players']);
         $this->websocket->redis->back($redis);
     }
 
@@ -147,7 +147,10 @@ class RoomCtrl extends BaseObject{
         $roomPlayersInfo['players'][] = $request['openid'];
         $redis->set($roomKey, json_encode($roomPlayersInfo), $expireTime); 
 
+        // 判断是否人满，人满可以开始战斗
         $isOK = (count($roomPlayersInfo['players']) >= $playerNum) ? 1 : 0;
+        
+        // 请求关卡接口，获取关卡信息
         $stageInfo = [];
         if ($isOK) {
             $result = HttpCurl::post($systemConf['stage_elem_url'], [
@@ -160,6 +163,17 @@ class RoomCtrl extends BaseObject{
             unset($result);
         }
 
+        // 请求胜场次数查询接口
+        $winNumInfo = [];
+        $resp = HttpCurl::post($systemConf['win_num_url'], json_encode([
+            'openids' => $roomPlayersInfo['players']
+        ]));
+        $resp = json_decode($resp, true);
+        if ($resp && isset($resp['success']) && $resp['success'] == 1) {
+            $winNumInfo = $resp['data'];
+        }
+        unset($resp);
+
         $battleInfo = [];
         $playerInfo = $redis->mGet($roomPlayersInfo['players']);
         foreach ($playerInfo as $info) {
@@ -168,6 +182,7 @@ class RoomCtrl extends BaseObject{
                 $info['opponent']   = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
                 $info['isFighting'] = $isOK;
                 $info['startTime']  = 0;
+                $info['winNum']     = isset($winNumInfo[$info['openid']]) ? $winNumInfo[$info['openid']] : 0;
                 $info['totalTime']  = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
                 $info['stageId']    = $roomPlayersInfo['stageId'];
                 // 设置玩家信息
@@ -176,7 +191,7 @@ class RoomCtrl extends BaseObject{
             }
         }
 
-        WssUtil::publish($redis, 'roomInfo', $roomPlayersInfo['players'], [
+        WssUtil::publishBattleInfo($redis, 'roomInfo', $roomPlayersInfo['players'], [
             'isOK'         => $isOK,
             'stageId'      => (int)$roomPlayersInfo['stageId'],
             'stageMessage' => isset($stageInfo['stage_message']) ? $stageInfo['stage_message'] : [],

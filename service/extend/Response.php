@@ -17,12 +17,14 @@ class Response {
     const ROOM_NOT_EXIST        = ['code' => 211, 'msg' => '对战房间不存在或已满'];
     const SUCCESS_CANCEL_ROOM   = ['code' => 212, 'msg' => '房间已取消'];
     const BATTLE_TIME           = ['code' => 213, 'msg' => '获取对战时间'];
+    const REGISTER_SUCCESS      = ['code' => 214, 'msg' => '注册成功'];
 
     const ERROR_ROUTE_PARAMS    = ['code' => 500, 'msg' => '路由参数有误'];
     const ERROR_REGISTER_PARAMS = ['code' => 501, 'msg' => '用户注册参数有误'];
     const ERROR_MATCH_PARAMS    = ['code' => 502, 'msg' => '匹配玩家参数有误'];
     const FAIL_CANCEL_MATCH     = ['code' => 503, 'msg' => '取消匹配失败'];
     const FAIL_CANCEL_ROOM      = ['code' => 504, 'msg' => '取消房间失败'];
+    const PLAYER_QUIT_BATTLE    = ['code' => 505, 'msg' => '玩家主动退出对战'];
     
     const ERROR_TYPE_UNKNOWN    = ['code' => 951, 'msg' => '未知消息类型！'];
     const ERROR_OTHER_UNKNOWN   = ['code' => 952, 'msg' => '返回数据错误，需服务端检查！'];

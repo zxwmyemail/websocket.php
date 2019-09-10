@@ -15,5 +15,6 @@ return [
 	'online_count_down' => 1800,        // 游戏倒计时时间，秒
 	'redis_expire_time' => 7200,       // redis中数据生存时间，秒
 	'stage_elem_url'    => 'https://game.elloworld.cn/findout/web/index.php/home/getRandStageElem',
+	'win_num_url'       => 'https://game.elloworld.cn/findout/web/index.php/home/getWinNumByOpenids',
 ];
 

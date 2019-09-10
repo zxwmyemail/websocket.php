@@ -141,7 +141,7 @@ class Bootstrap {
         self::$_fd = $request->fd;
 
         if (empty(self::$_routeParams)) {
-            error_log('request params error: ' . $request->data);
+            error_log('dispatchWs request params error: ' . $request->data);
             $retMsg = Response::json(Response::ERROR_ROUTE_PARAMS);
             if (self::$_wsIns->isEstablished($request->fd)) {
                 self::$_wsIns->push($request->fd, $retMsg);
@@ -161,7 +161,7 @@ class Bootstrap {
         self::$_routeParams = isset($data['route']) ? $data['route'] : '';
         self::$_reqParams = isset($data['request']) ? $data['request'] : []; 
         if (empty(self::$_routeParams)) {
-            error_log('request params error: ' . $request->rawContent());
+            error_log('dispatchHttp request params error: ' . $request->rawContent());
             $retMsg = Response::json(Response::ERROR_ROUTE_PARAMS);
             $response->end($retMsg);
         } else {
@@ -208,13 +208,13 @@ class Bootstrap {
         $player = json_decode($player, true);
         $diff = time() - $player['startTime'];
 
-        if (empty($player['opponent']) || $player['isFighting'] != 1 || $diff >= $player['totalTime']) {
+        if (empty($player['opponent']) || $player['isFighting'] != 1 || ($player['startTime'] > 0 && $diff >= $player['totalTime'])) {
             self::$_wsIns->redis->back($redis);
             return;
         }
 
         // 推送离线消息给对战所有方
-        WssUtil::publish($redis, 'offline', $player['opponent'], [
+        WssUtil::publishBattleInfo($redis, 'offline', $player['opponent'], [
             'openid'    => $player['openid'],
             'nickname'  => $player['nickname'],
             'avatarUrl' => $player['avatarUrl'],
