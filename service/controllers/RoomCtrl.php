@@ -46,7 +46,15 @@ class RoomCtrl extends BaseObject{
         $player = $redis->get($request['openid']); 
         $me = json_decode($player, true);
         $me['stageId'] = $request['stageId'];
+        $me['isFighting'] = 0;
+        $me['startTime'] = 0;
+        $me['endTime'] = 0;
+        $me['opponent'] = [];
+        $me['foundElem'] = [];
+        $me['winNum'] = 0;
         $room[] = $me;
+
+        $redis->set($me['openid'], json_encode($me), $expireTime);
        
         $this->websocket->redis->back($redis);
 
@@ -182,6 +190,8 @@ class RoomCtrl extends BaseObject{
                 $info['opponent']   = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
                 $info['isFighting'] = $isOK;
                 $info['startTime']  = 0;
+                $info['endTime']    = 0;
+                $info['foundElem']  = [];
                 $info['winNum']     = isset($winNumInfo[$info['openid']]) ? $winNumInfo[$info['openid']] : 0;
                 $info['totalTime']  = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
                 $info['stageId']    = $roomPlayersInfo['stageId'];

@@ -131,6 +131,15 @@ class UserCtrl extends BaseObject{
 
         // 推送离线消息给对战所有方
         if ($request['type'] == 4) {
+            // 推送主动退出消息
+            WssUtil::publishBattleInfo($redis, 'quitBattle', $player['opponent'], [
+                'openid'    => $player['openid'],
+                'nickname'  => $player['nickname'],
+                'avatarUrl' => $player['avatarUrl'],
+                'msg'       => '你的对手【' . $player['nickname'] . '】主动退出了游戏' 
+            ]);
+
+            // 然后更新主动退出状态信息
             $opponentInfo = $redis->mGet($player['opponent']);
             $opponentInfo = $opponentInfo ? $opponentInfo : [];
             foreach ($opponentInfo as $info) {
@@ -142,13 +151,6 @@ class UserCtrl extends BaseObject{
                     $redis->set($info['openid'], json_encode($info), $expireTime);
                 }
             }
-        
-            WssUtil::publishBattleInfo($redis, 'quitBattle', $player['opponent'], [
-                'openid'    => $player['openid'],
-                'nickname'  => $player['nickname'],
-                'avatarUrl' => $player['avatarUrl'],
-                'msg'       => '你的对手【' . $player['nickname'] . '】主动退出了游戏' 
-            ]);
         }
         
         $this->websocket->redis->back($redis);

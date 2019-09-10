@@ -1,6 +1,8 @@
 <?php
 namespace app\service\models;
 
+use app\system\library\BaseLog;
+
 class WssUtil {
 
     /**
@@ -50,7 +52,7 @@ class WssUtil {
         $playerInfo = $redis->mGet($openids);
         foreach ($playerInfo as $info) {
             if (!$info) continue;
-
+            
             $info = json_decode($info, true);
             $battleInfo[$info['openid']] = $info;
             // 向正在对战的其他玩家推送该玩家的数据
