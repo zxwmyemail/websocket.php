@@ -206,12 +206,6 @@ class Bootstrap {
         }
 
         $player = json_decode($player, true);
-        $diff = time() - $player['startTime'];
-
-        if (empty($player['opponent']) || $player['isFighting'] != 1 || ($player['startTime'] > 0 && $diff >= $player['totalTime'])) {
-            self::$_wsIns->redis->back($redis);
-            return;
-        }
 
         // 推送离线消息给对战所有方
         WssUtil::publishBattleInfo($redis, 'offline', $player['opponent'], [
