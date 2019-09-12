@@ -50,7 +50,8 @@ class RoomCtrl extends BaseObject{
         $me['startTime'] = 0;
         $me['endTime'] = 0;
         $me['opponent'] = [];
-        $me['foundElem'] = [];
+        $me['findElem'] = [];
+        $me['stageMessage'] = [];
         $me['winNum'] = 0;
         $room[] = $me;
 
@@ -59,10 +60,10 @@ class RoomCtrl extends BaseObject{
         $this->websocket->redis->back($redis);
 
         $retMsg = Response::json(Response::ROOM_PLAYERS, [
-            'isOK' => 0,
-            'stageId' => (int)$request['stageId'],
+            'isOK'         => 0,
+            'stageId'      => (int)$request['stageId'],
             'stageMessage' => [],
-            'battleInfo' => $room
+            'battleInfo'   => $room
         ]);
         $this->send($this->myFd, $retMsg);
     }
@@ -187,14 +188,15 @@ class RoomCtrl extends BaseObject{
         foreach ($playerInfo as $info) {
             if ($info) {
                 $info = json_decode($info, true);
-                $info['opponent']   = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
-                $info['isFighting'] = $isOK;
-                $info['startTime']  = 0;
-                $info['endTime']    = 0;
-                $info['foundElem']  = [];
-                $info['winNum']     = isset($winNumInfo[$info['openid']]) ? $winNumInfo[$info['openid']] : 0;
-                $info['totalTime']  = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
-                $info['stageId']    = $roomPlayersInfo['stageId'];
+                $info['opponent']     = array_values(array_diff($roomPlayersInfo['players'], [$info['openid']]));
+                $info['isFighting']   = $isOK;
+                $info['startTime']    = 0;
+                $info['endTime']      = 0;
+                $info['findElem']     = [];
+                $info['winNum']       = isset($winNumInfo[$info['openid']]) ? $winNumInfo[$info['openid']] : 0;
+                $info['stageMessage'] = isset($stageInfo['stage_message']) ? $stageInfo['stage_message'] : [];
+                $info['totalTime']    = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
+                $info['stageId']      = $roomPlayersInfo['stageId'];
                 // 设置玩家信息
                 $redis->set($info['openid'], json_encode($info), $expireTime);
                 $battleInfo[] = $info;
@@ -204,7 +206,6 @@ class RoomCtrl extends BaseObject{
         WssUtil::publishBattleInfo($redis, 'roomInfo', $roomPlayersInfo['players'], [
             'isOK'         => $isOK,
             'stageId'      => (int)$roomPlayersInfo['stageId'],
-            'stageMessage' => isset($stageInfo['stage_message']) ? $stageInfo['stage_message'] : [],
             'counting'     => isset($stageInfo['counting']) ? $stageInfo['counting'] : 600,
             'battleInfo'   => $battleInfo
         ]);

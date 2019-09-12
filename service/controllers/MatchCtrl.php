@@ -35,7 +35,7 @@ class MatchCtrl extends BaseObject{
         $player = json_decode($player, true);
         $player['isFighting'] = 0;
         $player['opponent'] = [];
-        $player['foundElem'] = [];
+        $player['findElem'] = [];
         $redis->set($request['openid'], json_encode($player));
         $redis->sAdd($matchPoolName, $request['openid']);
         $this->websocket->redis->back($redis);

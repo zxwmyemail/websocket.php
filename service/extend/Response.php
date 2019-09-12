@@ -25,6 +25,7 @@ class Response {
     const FAIL_CANCEL_MATCH     = ['code' => 503, 'msg' => '取消匹配失败'];
     const FAIL_CANCEL_ROOM      = ['code' => 504, 'msg' => '取消房间失败'];
     const PLAYER_QUIT_BATTLE    = ['code' => 505, 'msg' => '玩家主动退出对战'];
+    const GAME_OVER_SUCCESS     = ['code' => 506, 'msg' => '玩家游戏结束成功'];
     
     const ERROR_TYPE_UNKNOWN    = ['code' => 951, 'msg' => '未知消息类型！'];
     const ERROR_OTHER_UNKNOWN   = ['code' => 952, 'msg' => '返回数据错误，需服务端检查！'];

@@ -27,17 +27,18 @@ class UserCtrl extends BaseObject{
         $systemConf = Config::get('config');
         $redisConf = Config::get('redis', 'master');
         $playerData = [
-            'fd'         => $this->myFd,
-            'openid'     => $request['openid'],
-            'nickname'   => isset($request['nickname']) ? $request['nickname'] : '',
-            'avatarUrl'  => isset($request['avatarUrl']) ? $request['avatarUrl'] : '',
-            'channel'    => $redisConf['sub_channel_name']['host'],
-            'isFighting' => 0,
-            'startTime'  => 0,
-            'endTime'    => 0,
-            'totalTime'  => 0,
-            'opponent'   => [],
-            'foundElem'  => [],
+            'fd'           => $this->myFd,
+            'openid'       => $request['openid'],
+            'nickname'     => isset($request['nickname']) ? $request['nickname'] : '',
+            'avatarUrl'    => isset($request['avatarUrl']) ? $request['avatarUrl'] : '',
+            'channel'      => $redisConf['sub_channel_name']['host'],
+            'stageMessage' => [],
+            'isFighting'   => 0,
+            'startTime'    => 0,
+            'endTime'      => 0,
+            'totalTime'    => 0,
+            'opponent'     => [],
+            'findElem'     => [],
         ];
         $redis = $this->websocket->redis->get();
         $player = $redis->get($request['openid']); 
@@ -91,8 +92,7 @@ class UserCtrl extends BaseObject{
         $player = $redis->get($request['openid']);
         if ($player) {
             $player = json_decode($player, true);
-            $findElem = empty($player['findElem']) ? [] : $player['findElem'];
-            $player['findElem'] = array_merge($findElem, $request['findElem']);
+            $player['findElem'] = $request['findElem'];
             $redis->set($request['openid'], json_encode($player)); 
         }
 
@@ -128,6 +128,11 @@ class UserCtrl extends BaseObject{
         $player['isFighting'] = $request['type'];
         $player['endTime'] = $endTime;
         $redis->set($request['openid'], json_encode($player), $expireTime);
+
+        if ($request['type'] == 2) {
+            $retMsg = Response::json(Response::GAME_OVER_SUCCESS);
+            $this->send($this->myFd, $retMsg);
+        }
 
         // 推送离线消息给对战所有方
         if ($request['type'] == 4) {

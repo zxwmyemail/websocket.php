@@ -174,8 +174,11 @@ class Bootstrap {
                     $player = $player ? json_decode($player, true) : [];
                     if ($player) {
                         $diff = time() - $player['startTime'];
-                        if ($player['isFighting'] == 1 && $diff < $player['totalTime']) {
+                        if ($player['isFighting'] == 1) {
                             $isBattle = 1;
+                            if ($player['startTime'] > 0 && $diff > $player['totalTime']) {
+                                $isBattle = 0;
+                            }
                         }
                     }
                 }
@@ -301,7 +304,7 @@ class Bootstrap {
                         $info['startTime']  = 0;
                         $info['totalTime']  = isset($stageInfo['counting']) ? (int)$stageInfo['counting'] : 600;
                         $info['opponent']   = array_values(array_diff($player, [$info['openid']]));
-                        $info['foundElem']  = [];
+                        $info['findElem']  = [];
                         $battleInfo[$info['openid']] = $info;
                         $redis->setex($info['openid'], $expireTime, json_encode($info));
                     }

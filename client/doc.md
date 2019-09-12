@@ -98,7 +98,7 @@ redis中玩家数据保存json格式，openid作为键，其它信息为其值�
 	"endTime"  : 1369855555,                       // 对战结束时间
 	"totalTime": 600,                              // 对战倒计时总时间
 	"opponent" : ["oxf2323ddfdfdfdfdfd"],          // 对战的对方openid数组
-	"foundElem":[1,2,3,4,5],                       // 对战中自己找到的元素
+	"findElem":[1,2,3,4,5],                       // 对战中自己找到的元素
 }
 
 
